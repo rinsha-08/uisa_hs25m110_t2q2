@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Surat Built-up Growth, 2000–2020</title>
+<meta name="description" content="How Surat's built-up surface changed between 2000 and 2020 and where it grew: an interactive GHSL analysis in Google Earth Engine.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{
+  --paper:#f6f7f5; --card:#ffffff; --ink:#1e2328; --muted:#5f666d; --rule:#d9dcd8; --soft:#eceeeb;
+  --red:#bd0026; --river:#2f6178;
+  --e2000:#525252; --e2005:#2c7fb8; --e2010:#41b6c4; --e2015:#fdae61; --e2020:#d7191c;
+  --text:42rem; --wide:72rem;
+  --sans:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --serif:"Literata",Georgia,serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:4rem}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 1.0625rem/1.7 var(--serif)}
+img{max-width:100%;height:auto;display:block}
+a{color:var(--river);text-underline-offset:3px;text-decoration-thickness:1px}
+a:hover{text-decoration-thickness:2px}
+:focus-visible{outline:3px solid var(--e2005);outline-offset:2px}
+h1,h2,h3{font-family:var(--sans);line-height:1.15;margin:0}
+h2{font-size:clamp(1.6rem,3vw,2.1rem);font-weight:750;font-stretch:82%;margin:0 0 1rem}
+h3{font-size:1.12rem;font-weight:650;margin:2.25rem 0 .5rem}
+p{margin:0 0 1rem}
+code{font-size:.88em;background:var(--soft);padding:.05em .3em;border-radius:3px}
+.wrap{max-width:var(--wide);margin:0 auto;padding:0 16px}
+.prose{max-width:var(--text)}
+section{padding:4.5rem 0 0}
+figure{margin:1.5rem 0}
+figcaption{font-size:.88rem;color:var(--muted);margin-top:.5rem;max-width:var(--text);line-height:1.5}
+.small{font-size:.9rem;color:var(--muted)}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:1000;background:rgba(246,247,245,.94);backdrop-filter:blur(6px);border-bottom:1px solid var(--rule)}
+.nav .wrap{display:flex;align-items:center;gap:1.25rem;height:3.25rem;overflow-x:auto;scrollbar-width:none}
+.nav .wrap::-webkit-scrollbar{display:none}
+.nav b{font:750 1rem var(--sans);font-stretch:80%;white-space:nowrap;margin-right:auto}
+.nav a{font:500 .9rem var(--sans);color:var(--muted);text-decoration:none;white-space:nowrap;padding:.3rem 0;border-bottom:2px solid transparent}
+.nav a:hover,.nav a.on{color:var(--ink);border-bottom-color:var(--red)}
+
+/* hero */
+.hero{padding:3.25rem 0 0}
+.byline{font:500 .92rem/1.5 var(--sans);color:var(--muted);margin-bottom:1.75rem}
+h1{font-size:clamp(2.5rem,6.4vw,4.75rem);font-weight:800;font-stretch:76%;letter-spacing:-.015em;max-width:14ch}
+.lede{font-size:1.22rem;line-height:1.6;margin-top:1.25rem;max-width:40rem}
+
+.strip{margin:2.5rem 0 0}
+.strip-bar{display:flex;height:3.4rem;border-radius:3px;overflow:hidden}
+.strip-bar button{all:unset;cursor:pointer;display:flex;align-items:center;padding:0 .65rem;color:#fff;font:700 .95rem/1 var(--sans);white-space:nowrap;min-width:0;transition:filter .15s}
+.strip-bar button:hover{filter:brightness(1.12)}
+.strip-bar button:focus-visible{outline:3px solid var(--ink);outline-offset:-3px}
+.strip-keys{display:flex;font:500 .84rem/1.3 var(--sans);color:var(--muted);margin-top:.45rem}
+.strip-keys span{padding-right:.5rem;min-width:0}
+.strip-note{font-size:.9rem;color:var(--muted);margin-top:.6rem;max-width:var(--text)}
+
+.facts{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;margin:2.75rem 0 0;padding:0}
+.facts li{list-style:none;border-top:3px solid var(--ink);padding-top:.6rem}
+.facts b{display:block;font:800 2.2rem/1.1 var(--sans);font-stretch:78%}
+.facts span{font-size:.92rem;color:var(--muted);line-height:1.45;display:block;margin-top:.3rem}
+.facts a{color:inherit}
+
+/* map explorer */
+.explorer{display:grid;grid-template-columns:1fr 19rem;gap:0;border:1px solid var(--rule);background:var(--card);border-radius:4px;overflow:hidden;margin-top:1.25rem}
+#map{height:640px;background:#e9ece8}
+.panel{padding:1.1rem 1.1rem 1.25rem;border-left:1px solid var(--rule);display:flex;flex-direction:column;gap:1.1rem;font-family:var(--sans);font-size:.92rem}
+.panel h4{margin:0 0 .45rem;font:650 .9rem var(--sans)}
+.seg{display:flex;border:1px solid var(--rule);border-radius:4px;overflow:hidden}
+.seg button{all:unset;flex:1;text-align:center;padding:.45rem .3rem;cursor:pointer;font:500 .86rem var(--sans);color:var(--muted)}
+.seg button+button{border-left:1px solid var(--rule)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.seg button:focus-visible{outline:2px solid var(--e2005);outline-offset:-2px}
+.epochs{display:flex;gap:.35rem;align-items:center}
+.epochs .seg{flex:1}
+.play{all:unset;cursor:pointer;width:2.1rem;height:2.1rem;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;font-size:.8rem;flex:none}
+.play:focus-visible{outline:3px solid var(--e2005);outline-offset:2px}
+.dim{opacity:.4;pointer-events:none}
+.chips{display:flex;flex-wrap:wrap;gap:.3rem}
+.chips button{all:unset;cursor:pointer;padding:.25rem .55rem;border:1px solid var(--rule);border-radius:999px;font:500 .82rem var(--sans);color:var(--ink)}
+.chips button[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff}
+.chips button:focus-visible{outline:2px solid var(--e2005);outline-offset:1px}
+.check{display:flex;align-items:center;gap:.45rem;cursor:pointer}
+.check input{accent-color:var(--red);width:1rem;height:1rem}
+.legend .ramp{height:.7rem;border-radius:2px;background:linear-gradient(90deg,#ffffb2,#fecc5c,#fd8d3c,#f03b20,#bd0026)}
+.legend .ends{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);margin-top:.2rem}
+.readout{background:var(--paper);border-radius:4px;padding:.75rem;min-height:9.5rem}
+.readout .t{font-weight:650;margin-bottom:.35rem}
+.spark{display:flex;align-items:flex-end;gap:4px;height:3.4rem;margin:.4rem 0 .2rem}
+.spark i{flex:1;background:var(--e2005);border-radius:2px 2px 0 0;min-height:2px}
+.spark-l{display:flex;gap:4px;font-size:.7rem;color:var(--muted)}
+.spark-l span{flex:1;text-align:center}
+.map-msg{display:none;padding:1rem;font-family:var(--sans);font-size:.92rem;background:#fff3cd}
+
+/* charts */
+.chart-card{background:var(--card);border:1px solid var(--rule);border-radius:4px;padding:1rem 1rem .75rem;margin:1.25rem 0}
+.chart-head{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.6rem}
+.chart-head h4{margin:0;font:650 1rem var(--sans)}
+.chart-box{position:relative;height:320px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start}
+.grid2>*,.explorer>*{min-width:0}
+
+.split{display:flex;height:2.6rem;border-radius:3px;overflow:hidden;margin:.6rem 0 .5rem}
+.split span{display:flex;align-items:center;padding:0 .6rem;color:#fff;font:700 .9rem var(--sans);white-space:nowrap;overflow:hidden}
+.split-keys{display:grid;grid-template-columns:repeat(3,auto);gap:.4rem 1.25rem;justify-content:start;font:400 .86rem var(--sans);color:var(--muted)}
+.split-keys i{display:inline-block;width:.75rem;height:.75rem;border-radius:2px;margin-right:.35rem;vertical-align:-1px}
+
+/* swipe */
+.swipe{position:relative;background:#fff;border:1px solid var(--rule);border-radius:4px;overflow:hidden;touch-action:pan-y}
+.swipe img{width:100%}
+.swipe .top{position:absolute;inset:0;clip-path:inset(0 50% 0 0)}
+.swipe .line{position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--ink);pointer-events:none}
+.swipe .knob{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:2.2rem;height:2.2rem;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font:700 .8rem var(--sans);pointer-events:none}
+.swipe .tag{position:absolute;top:.6rem;font:700 .9rem var(--sans);background:rgba(255,255,255,.9);padding:.15rem .5rem;border-radius:3px}
+.swipe input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:ew-resize;margin:0}
+.gif{background:#fff;border:1px solid var(--rule);border-radius:4px}
+
+/* tables */
+.tbl{overflow-x:auto;max-width:var(--text)}
+table{border-collapse:collapse;font:400 .9rem/1.4 var(--sans);margin:.5rem 0 1rem;min-width:100%}
+th,td{padding:.45rem .7rem;text-align:right;border-bottom:1px solid var(--rule);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{font-weight:650;border-bottom:2px solid var(--ink)}
+details{margin:.75rem 0;max-width:var(--text)}
+summary{cursor:pointer;font:600 .95rem var(--sans);color:var(--river)}
+
+.limits li{margin-bottom:.6rem}
+.links{padding-left:1.1rem}
+.links li{margin-bottom:.35rem}
+footer{margin-top:5rem;padding:2rem 0 3rem;border-top:1px solid var(--rule);font-size:.88rem;color:var(--muted)}
+
+@media (max-width:900px){
+  .explorer{grid-template-columns:1fr}
+  .panel{border-left:0;border-top:1px solid var(--rule)}
+  #map{height:460px}
+  .grid2{grid-template-columns:1fr}
+  .facts{grid-template-columns:1fr 1fr}
+}
+@media (max-width:520px){
+  .strip-bar button{font-size:.75rem;padding:0 .3rem}
+  .strip-keys{font-size:.7rem}
+  .chart-box{height:280px}
+  .split-keys{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav" aria-label="Sections">
+  <div class="wrap">
+    <b>Surat, 2000–2020</b>
+    <a href="#map-section">Map</a>
+    <a href="#how-much">How much</a>
+    <a href="#outward">Outward or denser</a>
+    <a href="#where">Where</a>
+    <a href="#discussion">Discussion</a>
+    <a href="#method">Method and data</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="byline">Rinsha Narayanan (HS25M110)<br>Urban Informatics and Spatial Analytics, IIT Tirupati. Test 2, Question 2</p>
+    <h1>Surat grew at its edges</h1>
+    <p class="lede">Between 2000 and 2020, Surat added 22 km² of built-up surface, a 57% increase. Seven-tenths of it went onto land that had not been built-up before, mostly in a band 4–10 km from the old core. The north-east took the largest share.</p>
+
+    <div class="strip" aria-label="Built-up land footprint by epoch">
+      <div class="strip-bar">
+        <button style="flex:103.9;background:var(--e2000)" data-epoch="2000" aria-label="Show 2000 on the map">103.9 km²</button>
+        <button style="flex:25.6;background:var(--e2005)" data-epoch="2005" aria-label="Show 2005 on the map">+25.6</button>
+        <button style="flex:17.0;background:var(--e2010)" data-epoch="2010" aria-label="Show 2010 on the map">+17.0</button>
+        <button style="flex:10.0;background:var(--e2015);color:var(--ink)" data-epoch="2015" aria-label="Show 2015 on the map">+10.0</button>
+        <button style="flex:7.4;background:var(--e2020)" data-epoch="2020" aria-label="Show 2020 on the map">+7.4</button>
+      </div>
+      <div class="strip-keys">
+        <span style="flex:103.9">Built-up land by 2000</span>
+        <span style="flex:25.6">2005</span>
+        <span style="flex:17.0">2010</span>
+        <span style="flex:10.0">2015</span>
+        <span style="flex:7.4">2020</span>
+      </div>
+      <p class="strip-note">Built-up land is the area of 100 m cells that are at least 10% covered by buildings. Each epoch added less new land than the one before. Click a block to see that year on the map.</p>
+    </div>
+
+    <ul class="facts">
+      <li><b>+22.0 km²</b><span>built-up surface added, from 38.3 to 60.3 km² (<a href="#how-much">details</a>)</span></li>
+      <li><b>71%</b><span>of the gain was on newly built-up land (<a href="#outward">details</a>)</span></li>
+      <li><b>72%</b><span>of growth was 4–10 km from the 2000 core (<a href="#rings">details</a>)</span></li>
+      <li><b>45%</b><span>of growth fell in 10% of the city's 1 km cells (<a href="#map-section">see map</a>)</span></li>
+    </ul>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- MAP EXPLORER -->
+<section id="map-section">
+  <h2>Explore the map</h2>
+  <p class="prose">Surat is divided into 1 km cells. Step through the epochs or press play to watch building cover spread. Switch to <i>growth</i> to see where the most was added, filter by compass sector, and hover or tap any cell for its numbers.</p>
+
+  <div class="explorer">
+    <div>
+      <div id="map" role="region" aria-label="Interactive map of Surat's 1 km grid"></div>
+      <div class="map-msg" id="map-msg">The map data could not load. Open this page from GitHub Pages or a local web server, because browsers block data files opened directly from disk.</div>
+    </div>
+    <div class="panel">
+      <div>
+        <h4>Show</h4>
+        <div class="seg" id="mode">
+          <button aria-pressed="true" data-mode="cover">Building cover</button>
+          <button aria-pressed="false" data-mode="growth">Growth 2000–20</button>
+        </div>
+      </div>
+      <div id="epoch-wrap">
+        <h4>Epoch</h4>
+        <div class="epochs">
+          <button class="play" id="play" aria-label="Play through the epochs">▶</button>
+          <div class="seg" id="epochs">
+            <button aria-pressed="false" data-epoch="2000">2000</button>
+            <button aria-pressed="false" data-epoch="2005">05</button>
+            <button aria-pressed="false" data-epoch="2010">10</button>
+            <button aria-pressed="false" data-epoch="2015">15</button>
+            <button aria-pressed="true" data-epoch="2020">20</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h4>Sector</h4>
+        <div class="chips" id="sectors"></div>
+      </div>
+      <div>
+        <label class="check"><input type="checkbox" id="hot" checked> Outline top 10% growth cells</label>
+        <label class="check" style="margin-top:.4rem"><input type="checkbox" id="sat"> Satellite basemap</label>
+      </div>
+      <div class="legend">
+        <h4 id="legend-title">Building cover, 2020</h4>
+        <div class="ramp"></div>
+        <div class="ends"><span id="lg-min">0%</span><span id="lg-max"></span></div>
+      </div>
+      <div class="readout" id="readout" aria-live="polite">
+        <div class="t">Hover or tap a cell</div>
+        <div class="small">Its building cover for every epoch will show here.</div>
+      </div>
+    </div>
+  </div>
+  <p class="small" style="margin-top:.5rem">The map opens on 2020. Building cover is the share of each cell's area covered by buildings. Basemaps © Esri. <a href="outputs/surat_timeslider.html">Open the Folium time-slider version</a>.</p>
+</section>
+
+<!-- HOW MUCH -->
+<section id="how-much">
+  <h2>How much it grew</h2>
+  <div class="prose">
+    <p>Built-up surface rose from 38.3 km² to 60.3 km², which is from 8.7% to 13.7% of the city's 438.9 km². That is about 2.3% a year. Growth peaked in 2005–10 and then dropped sharply: only 2.5 km² was added in 2015–20, about a third of the earlier pace.</p>
+  </div>
+  <div class="chart-card">
+    <div class="chart-head">
+      <h4 id="tot-title">Total built-up surface (km²)</h4>
+      <div class="seg" id="tot-toggle" style="min-width:16rem">
+        <button aria-pressed="true" data-v="total">Total</button>
+        <button aria-pressed="false" data-v="added">Added per interval</button>
+      </div>
+    </div>
+    <div class="chart-box"><canvas id="c-totals" aria-label="Bar chart of Surat's built-up surface by epoch"></canvas></div>
+  </div>
+  <details>
+    <summary>Show the table</summary>
+    <div class="tbl"><table>
+      <thead><tr><th>Epoch</th><th>Built-up surface (km²)</th><th>Share of city</th><th>Added (km²)</th><th>Growth per year</th></tr></thead>
+      <tbody>
+        <tr><td>2000</td><td>38.35</td><td>8.7%</td><td>–</td><td>–</td></tr>
+        <tr><td>2005</td><td>44.00</td><td>10.0%</td><td>5.66</td><td>2.8%</td></tr>
+        <tr><td>2010</td><td>51.19</td><td>11.7%</td><td>7.18</td><td>3.1%</td></tr>
+        <tr><td>2015</td><td>57.82</td><td>13.2%</td><td>6.63</td><td>2.5%</td></tr>
+        <tr><td>2020</td><td>60.30</td><td>13.7%</td><td>2.48</td><td>0.8%</td></tr>
+      </tbody>
+    </table></div>
+  </details>
+
+  <h3>At 100 m detail</h3>
+  <figure>
+    <img src="outputs/fig_epochs.png" alt="Five maps of Surat's built-up surface for 2000, 2005, 2010, 2015 and 2020 on one colour scale." loading="lazy">
+    <figcaption>Built-up surface per 100 m cell at each epoch, all on the same 0–8,000 m² scale. The black line is the Surat ULB boundary.</figcaption>
+  </figure>
+  <div class="grid2">
+    <div>
+      <h3 style="margin-top:.5rem">Drag to compare 2000 and 2020</h3>
+      <div class="swipe" id="swipe">
+        <img src="outputs/frames/builtup_2020.png" alt="Built-up surface in 2020">
+        <div class="top" id="swipe-top"><img src="outputs/frames/builtup_2000.png" alt="Built-up surface in 2000"></div>
+        <div class="line" id="swipe-line"></div>
+        <div class="knob" id="swipe-knob" aria-hidden="true">⇔</div>
+        <span class="tag" style="left:.6rem">2000</span>
+        <span class="tag" style="right:.6rem">2020</span>
+        <input type="range" id="swipe-range" min="0" max="100" value="50" aria-label="Swipe between the 2000 and 2020 maps">
+      </div>
+    </div>
+    <div>
+      <h3 style="margin-top:.5rem">Animated, 2000 to 2020</h3>
+      <img class="gif" src="outputs/surat_builtup.gif" alt="Animation of Surat's built-up surface across the five epochs" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<!-- OUTWARD -->
+<section id="outward">
+  <h2>Outward or denser?</h2>
+  <div class="prose">
+    <p>Built-up surface can grow in two ways. New land can become built-up, so the footprint expands, or land that was already built-up can get more buildings, which is densification. Surat mostly expanded. Its built-up footprint grew 58%, from 103.9 to 163.9 km². Meanwhile the share of that footprint covered by buildings hovered around 37%.</p>
+    <p>The timing suggests a pattern of "claim, then fill". In 2000–05 the city took on 25.6 km² of new built-up land, and density inside the footprint dipped to 34%. Later epochs added less land each time, and density climbed back to 37% as those areas filled in.</p>
+  </div>
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-head"><h4>Footprint vs built-up surface (km²)</h4></div>
+      <div class="chart-box"><canvas id="c-foot" aria-label="Line chart comparing built-up footprint and built-up surface"></canvas></div>
+      <p class="small" style="margin:.4rem 0 0">Hover a point to see the density inside the footprint.</p>
+    </div>
+    <div class="chart-card">
+      <div class="chart-head"><h4>Where the 2000–2020 gain happened</h4></div>
+      <div class="split" aria-label="Split of the 22 km² gain">
+        <span style="flex:15.56;background:var(--red)">71%</span>
+        <span style="flex:4.83;background:var(--e2005)">22%</span>
+        <span style="flex:1.56;background:#9aa0a6">7%</span>
+      </div>
+      <div class="split-keys">
+        <span><i style="background:var(--red)"></i>Expansion, 15.6 km²</span>
+        <span><i style="background:var(--e2005)"></i>Densification, 4.8 km²</span>
+        <span><i style="background:#9aa0a6"></i>Scattered, 1.6 km²</span>
+      </div>
+      <p class="small" style="margin-top:1rem">Expansion is growth in cells that crossed the 10% rule between 2000 and 2020. Densification is growth in cells already above it in 2000. Scattered is growth in cells still below 10% in 2020.</p>
+      <figure style="margin:.5rem 0 0">
+        <img src="outputs/fig_when_built.png" alt="Map of Surat with each 100 m cell coloured by the epoch it first became built-up." loading="lazy">
+        <figcaption>When each 100 m cell first became built-up. Grey was built-up by 2000, and the colours are later epochs.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- WHERE -->
+<section id="where">
+  <h2>Where it grew</h2>
+  <div class="grid2">
+    <figure>
+      <img src="outputs/fig_change_100m.png" alt="Map of built-up surface added per 100 m cell between 2000 and 2020." loading="lazy">
+      <figcaption>Built-up surface added per 100 m cell, 2000–2020. GHSL records no losses.</figcaption>
+    </figure>
+    <figure>
+      <img src="outputs/fig_hotspots.png" alt="1 km grid map of growth with the top 10% of cells outlined." loading="lazy">
+      <figcaption>Growth per 1 km cell. The outlined cells are the top 10%, and they hold 45% of all growth. You can explore these on the <a href="#map-section">map</a>.</figcaption>
+    </figure>
+  </div>
+
+  <h3 id="rings">Distance from the core</h3>
+  <div class="prose">
+    <p>The core is the built-up-weighted centre of Surat in 2000. The inner 0–2 km was already saturated and barely changed, going from 36% to 38% covered. Growth was concentrated 4–10 km out, which took 72% of the total. The 6–8 km ring alone took 29%, and its building cover more than doubled, from 6.2% to 14.9%. Beyond 10 km, growth thins out.</p>
+  </div>
+  <div class="chart-card">
+    <div class="chart-head">
+      <h4 id="ring-title">Building cover by distance from the core (%)</h4>
+      <div class="seg" id="ring-toggle" style="min-width:16rem">
+        <button aria-pressed="true" data-v="cover">Building cover</button>
+        <button aria-pressed="false" data-v="share">Share of growth</button>
+      </div>
+    </div>
+    <div class="chart-box"><canvas id="c-rings" aria-label="Chart of building cover or growth share by distance ring"></canvas></div>
+  </div>
+
+  <h3 id="direction">Direction</h3>
+  <div class="prose">
+    <p>The north-east led by a wide margin. It took 28% of all growth, and its built-up surface nearly doubled (+96%). The south-west (+82%) and south-east (+78%) also grew fast relative to their small 2000 base. The south and north added a lot in absolute terms but more slowly in relative terms, because they already had more built-up land in 2000.</p>
+  </div>
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-head">
+        <h4>Growth by compass sector</h4>
+        <div class="seg" id="sec-toggle" style="min-width:14rem">
+          <button aria-pressed="true" data-v="share">Share of growth</button>
+          <button aria-pressed="false" data-v="inc">% increase</button>
+        </div>
+      </div>
+      <div class="chart-box"><canvas id="c-sectors" aria-label="Polar chart of growth by compass sector"></canvas></div>
+      <p class="small" style="margin:.4rem 0 0">Click a sector to highlight it on the map.</p>
+    </div>
+    <figure style="margin-top:1.25rem">
+      <img src="outputs/fig_where_grew.png" alt="Growth map with compass sectors, distance rings and each sector's share of growth." loading="lazy">
+      <figcaption>Growth per 1 km cell, with sectors around the 2000 core (★) and dashed rings every 4 km.</figcaption>
+    </figure>
+  </div>
+  <details>
+    <summary>Show the sector table</summary>
+    <div class="tbl"><table>
+      <thead><tr><th>Sector</th><th>2000 (ha)</th><th>2020 (ha)</th><th>Added (ha)</th><th>Share of growth</th><th>Increase</th></tr></thead>
+      <tbody>
+        <tr><td>North-east</td><td>631</td><td>1,236</td><td>605</td><td>27.5%</td><td>+96%</td></tr>
+        <tr><td>South-west</td><td>361</td><td>655</td><td>294</td><td>13.4%</td><td>+82%</td></tr>
+        <tr><td>South</td><td>774</td><td>1,053</td><td>278</td><td>12.7%</td><td>+36%</td></tr>
+        <tr><td>North</td><td>662</td><td>921</td><td>258</td><td>11.8%</td><td>+39%</td></tr>
+        <tr><td>North-west</td><td>517</td><td>732</td><td>215</td><td>9.8%</td><td>+42%</td></tr>
+        <tr><td>South-east</td><td>271</td><td>483</td><td>212</td><td>9.7%</td><td>+78%</td></tr>
+        <tr><td>West</td><td>370</td><td>552</td><td>182</td><td>8.3%</td><td>+49%</td></tr>
+        <tr><td>East</td><td>246</td><td>397</td><td>151</td><td>6.9%</td><td>+61%</td></tr>
+      </tbody>
+    </table></div>
+  </details>
+</section>
+
+<!-- DISCUSSION -->
+<section id="discussion" class="prose">
+  <h2>Discussion</h2>
+  <h3 style="margin-top:0">Spatial pattern</h3>
+  <p>In 2000 Surat already had a dense core around the bend of the Tapi, and over the next 20 years that core barely changed. Growth went into a ring around it, 4–10 km out, with the north-east taking the most. It was also concentrated rather than spread evenly: a tenth of the city's 1 km cells account for almost half the new surface. So the major growth zones are a few clusters, mainly in the north-east and along the eastern and south-western edges of the 2000 footprint.</p>
+  <h3>Temporal change</h3>
+  <p>The city added 22 km² of built-up surface (+57%). Growth peaked in 2005–10 and slowed sharply in 2015–20. Most of the gain (71%) came from new land becoming built-up, not from existing areas getting denser. The timing shows a cycle of claiming then filling: large footprint additions early, when density inside the footprint dipped, and smaller additions later, when it recovered. Over this period Surat's growth was mainly peripheral expansion, with the inner city close to saturation in GHSL terms.</p>
+  <h3>Limitations</h3>
+  <ul class="limits">
+    <li><b>Spatial resolution.</b> GHSL is a 100 m grid that estimates building cover. It does not map individual buildings, and roads and very small plots are not well captured.</li>
+    <li><b>Temporal resolution.</b> There are only 5-year epochs, so the exact year of construction is unknown and short bursts of growth are averaged out.</li>
+    <li><b>Modelled data.</b> GHSL is derived from satellite imagery plus modelling. Its built-up surface never decreases, so demolition and redevelopment are not captured. The 2020 epoch is the most model-dependent, so treat the 2015–20 slowdown with caution rather than as a confirmed real-world slowdown.</li>
+    <li><b>Analytical choices.</b> The 10% built-up rule, the 1 km grid, the 2 km rings and the 8 sectors are my choices and not official zones. Different choices would shift the numbers somewhat.</li>
+    <li><b>Boundary.</b> The SBM municipal boundary is used. Growth just outside it, and any recent boundary extensions, are not counted.</li>
+  </ul>
+</section>
+
+<!-- METHOD -->
+<section id="method" class="prose">
+  <h2>Method and data</h2>
+  <p>Everything was done in Python with the Earth Engine API and <a href="https://geemap.org">geemap</a>. Totals are sums of <code>built_surface</code> inside the boundary at GHSL's native 100 m grid. The footprint uses cells with at least 1,000 m² built. Growth zones use a 1 km fishnet clipped to the boundary, with rings and sectors measured from the 2000 built-up-weighted centre.</p>
+  <h3>Sources</h3>
+  <ul class="links">
+    <li>Built-up data: <a href="https://developers.google.com/earth-engine/datasets/catalog/JRC_GHSL_P2023A_GHS_BUILT_S">GHSL Built-up Surface P2023A</a> in the Earth Engine catalog (<code>JRC/GHSL/P2023A/GHS_BUILT_S</code>), from the European Commission's <a href="https://human-settlement.emergency.copernicus.eu/">Global Human Settlement Layer</a> project</li>
+    <li>Boundary: Surat ULB polygon (ULB code 802629) from the Swachh Bharat Mission layer, released via <a href="https://github.com/ramSeraph/indian_admin_boundaries/releases/tag/urban">ramSeraph/indian_admin_boundaries</a> (CC0, attribution to <a href="https://datameet.org">datameet</a> and the original government source)</li>
+    <li>Basemaps in the interactive maps: Esri World Light Gray Canvas and World Imagery</li>
+  </ul>
+  <h3>Code and downloads</h3>
+  <ul class="links">
+    <li><a href="Surat_GHSL_BuiltUp_Q2.ipynb">Jupyter notebook</a> with the full code and outputs</li>
+    <li><a href="surat_ulb.geojson">Surat boundary</a> (GeoJSON)</li>
+    <li><a href="outputs/surat_grid_1km.geojson">1 km grid with all epochs</a> (GeoJSON)</li>
+    <li>Tables: <a href="outputs/totals.csv">totals</a>, <a href="outputs/rings.csv">rings</a>, <a href="outputs/sectors.csv">sectors</a></li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">Analysis and page by Rinsha Narayanan, IIT Tirupati, 2026.</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<script>
+(function () {
+  "use strict";
+  var EP = [2000, 2005, 2010, 2015, 2020];
+  var ECOL = ["#525252", "#2c7fb8", "#41b6c4", "#fdae61", "#d7191c"];
+  var PAL = ["#ffffb2", "#fecc5c", "#fd8d3c", "#f03b20", "#bd0026"];
+  var SECT = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  var SNAME = {N: "North", NE: "North-east", E: "East", SE: "South-east", S: "South", SW: "South-west", W: "West", NW: "North-west"};
+  var REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // results from the notebook
+  var D = {
+    total: [38.35, 44.00, 51.19, 57.82, 60.30],
+    added: [5.66, 7.18, 6.63, 2.48], rate: [2.8, 3.1, 2.5, 0.8],
+    foot: [103.87, 129.45, 146.42, 156.45, 163.88],
+    dens: [36.9, 34.0, 35.0, 37.0, 36.8],
+    rings: ["0–2", "2–4", "4–6", "6–8", "8–10", "10–12", "12–14", "14–16", "16–18", "18–20"],
+    cover: {
+      2000: [36.2, 28.5, 18.9, 6.2, 3.1, 3.4, 1.7, 1.9, 2.7, 0.3],
+      2005: [36.7, 29.7, 21.4, 8.5, 4.4, 4.0, 2.2, 2.2, 3.3, 0.4],
+      2010: [37.1, 30.9, 24.5, 11.6, 6.1, 4.8, 2.9, 2.7, 4.1, 0.5],
+      2015: [37.5, 32.0, 27.2, 14.3, 7.6, 5.5, 3.5, 3.5, 4.9, 0.6],
+      2020: [37.6, 32.3, 27.7, 14.9, 8.2, 5.9, 4.0, 5.4, 5.6, 0.6]
+    },
+    ringShare: [0.9, 6.2, 24.5, 28.9, 18.9, 8.5, 6.9, 4.0, 1.2, 0.0],
+    secShare: {N: 11.8, NE: 27.5, E: 6.9, SE: 9.7, S: 12.7, SW: 13.4, W: 8.3, NW: 9.8},
+    secInc: {N: 39.0, NE: 95.8, E: 61.2, SE: 78.1, S: 35.9, SW: 81.6, W: 49.2, NW: 41.6}
+  };
+
+  function hex(c) { return [1, 3, 5].map(function (i) { return parseInt(c.substr(i, 2), 16); }); }
+  function ramp(t) {
+    t = Math.max(0, Math.min(1, t));
+    var n = PAL.length - 1, i = Math.min(n - 1, Math.floor(t * n)), f = t * n - i;
+    var a = hex(PAL[i]), b = hex(PAL[i + 1]);
+    return "rgb(" + a.map(function (v, k) { return Math.round(v + (b[k] - v) * f); }).join(",") + ")";
+  }
+  function pressed(group, btn) {
+    group.querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
+  }
+
+  /* ---------- swipe ---------- */
+  var sr = document.getElementById("swipe-range");
+  sr.addEventListener("input", function () {
+    document.getElementById("swipe-top").style.clipPath = "inset(0 " + (100 - sr.value) + "% 0 0)";
+    document.getElementById("swipe-line").style.left = sr.value + "%";
+    document.getElementById("swipe-knob").style.left = sr.value + "%";
+  });
+
+  /* ---------- nav highlight ---------- */
+  var navLinks = document.querySelectorAll(".nav a");
+  var secIds = ["map-section", "how-much", "outward", "where", "discussion", "method"];
+  function navOn() {
+    var cur = null;
+    secIds.forEach(function (id) { if (document.getElementById(id).getBoundingClientRect().top < window.innerHeight * 0.35) cur = id; });
+    navLinks.forEach(function (a) { a.classList.toggle("on", a.getAttribute("href") === "#" + cur); });
+  }
+  window.addEventListener("scroll", navOn, {passive: true}); navOn();
+
+  /* ---------- map ---------- */
+  var S = {mode: "cover", epoch: 2020, sector: null, hot: true};
+  var map, grid, hotLayer, coverMax = 60, growthMax = 35, hotCut = Infinity, timer = null;
+  var chipBox = document.getElementById("sectors");
+  ["All"].concat(SECT).forEach(function (s) {
+    var b = document.createElement("button");
+    b.textContent = s; b.dataset.s = s; b.setAttribute("aria-pressed", s === "All" ? "true" : "false");
+    b.title = s === "All" ? "All sectors" : SNAME[s];
+    chipBox.appendChild(b);
+  });
+
+  function cellStyle(f) {
+    var p = f.properties, v, t;
+    if (S.mode === "cover") { v = p["pct" + S.epoch]; t = v / coverMax; } else { v = p.growth_ha; t = v / growthMax; }
+    var faded = S.sector && p.sector !== S.sector;
+    return {fillColor: v > 0 ? ramp(t) : "#ffffff", fillOpacity: faded ? 0.08 : 0.78, color: "#ffffff", weight: 0.5, opacity: faded ? 0.2 : 0.9};
+  }
+  function refresh() {
+    if (!grid) return;
+    grid.setStyle(cellStyle);
+    var lt = document.getElementById("legend-title");
+    if (S.mode === "cover") {
+      lt.textContent = "Building cover, " + S.epoch;
+      document.getElementById("lg-max").textContent = coverMax + "%";
+      document.getElementById("lg-min").textContent = "0%";
+    } else {
+      lt.textContent = "Built-up surface added, 2000–2020";
+      document.getElementById("lg-max").textContent = growthMax + " ha per cell";
+      document.getElementById("lg-min").textContent = "0";
+    }
+    document.getElementById("epoch-wrap").classList.toggle("dim", S.mode !== "cover");
+    if (hotLayer) { if (S.hot) hotLayer.addTo(map); else map.removeLayer(hotLayer); }
+  }
+  function setEpoch(y) {
+    S.epoch = y;
+    pressed(document.getElementById("epochs"), document.querySelector('#epochs [data-epoch="' + y + '"]'));
+    refresh();
+  }
+  function setMode(m) {
+    S.mode = m;
+    pressed(document.getElementById("mode"), document.querySelector('#mode [data-mode="' + m + '"]'));
+    refresh();
+  }
+  function setSector(s) {
+    S.sector = s === "All" ? null : s;
+    pressed(chipBox, chipBox.querySelector('[data-s="' + (S.sector || "All") + '"]'));
+    refresh();
+  }
+  function stopPlay() { clearInterval(timer); timer = null; document.getElementById("play").textContent = "▶"; }
+
+  function readout(p) {
+    var max = Math.max.apply(null, EP.map(function (y) { return p["pct" + y]; })) || 1;
+    var bars = EP.map(function (y, i) {
+      return '<i style="height:' + Math.max(3, p["pct" + y] / Math.max(max, 10) * 100) + '%;background:' + ECOL[i] + '" title="' + y + ': ' + p["pct" + y] + '%"></i>';
+    }).join("");
+    document.getElementById("readout").innerHTML =
+      '<div class="t">' + (SNAME[p.sector] || p.sector) + ' sector, ' + p.ring + ' from core</div>' +
+      '<div>Building cover <b>' + p.pct2000 + '%</b> in 2000 to <b>' + p.pct2020 + '%</b> in 2020</div>' +
+      '<div class="spark">' + bars + '</div>' +
+      '<div class="spark-l">' + EP.map(function (y) { return "<span>" + y + "</span>"; }).join("") + '</div>' +
+      '<div style="margin-top:.35rem">Added: <b>' + p.growth_ha + ' ha</b>' + (p.growth_ha >= hotCut ? ' (a top-10% cell)' : '') + '</div>';
+  }
+
+  if (window.L) {
+    map = L.map("map", {scrollWheelZoom: false, zoomSnap: 0.25});
+    var ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/{s}/MapServer/tile/{z}/{y}/{x}";
+    var gray = L.tileLayer(ESRI.replace("{s}", "Canvas/World_Light_Gray_Base"), {attribution: "Tiles © Esri", maxZoom: 16}).addTo(map);
+    var sat = L.tileLayer(ESRI.replace("{s}", "World_Imagery"), {attribution: "Tiles © Esri, Maxar, Earthstar Geographics", maxZoom: 18});
+    map.createPane("labels"); map.getPane("labels").style.zIndex = 650; map.getPane("labels").style.pointerEvents = "none";
+    L.tileLayer(ESRI.replace("{s}", "Reference/World_Boundaries_and_Places"), {pane: "labels", maxZoom: 18}).addTo(map);
+    map.setView([21.18, 72.83], 11);
+    map.on("click", function () { map.scrollWheelZoom.enable(); });
+
+    document.getElementById("sat").addEventListener("change", function (e) {
+      if (e.target.checked) { map.removeLayer(gray); sat.addTo(map); } else { map.removeLayer(sat); gray.addTo(map); }
+    });
+
+    Promise.all([
+      fetch("outputs/surat_grid_1km.geojson").then(function (r) { if (!r.ok) throw r; return r.json(); }),
+      fetch("surat_ulb.geojson").then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+    ]).then(function (res) {
+      var g = res[0], feats = g.features;
+      var allPct = [], grow = [];
+      feats.forEach(function (f) { EP.forEach(function (y) { allPct.push(+f.properties["pct" + y] || 0); }); grow.push(+f.properties.growth_ha || 0); });
+      coverMax = Math.ceil(Math.max.apply(null, allPct) / 10) * 10;
+      growthMax = Math.ceil(Math.max.apply(null, grow) / 5) * 5;
+      var sorted = grow.slice().sort(function (a, b) { return a - b; });
+      hotCut = sorted[Math.floor(0.9 * (sorted.length - 1))];
+
+      grid = L.geoJSON(g, {
+        style: cellStyle,
+        onEachFeature: function (f, layer) {
+          layer.on("mouseover click", function () { readout(f.properties); layer.setStyle({weight: 2, color: "#1e2328"}); layer.bringToFront(); });
+          layer.on("mouseout", function () { grid.resetStyle(layer); });
+        }
+      }).addTo(map);
+      hotLayer = L.geoJSON({type: "FeatureCollection", features: feats.filter(function (f) { return f.properties.growth_ha >= hotCut; })},
+        {style: {fill: false, color: "#1e2328", weight: 2}, interactive: false});
+      if (res[1]) L.geoJSON(res[1], {style: {fill: false, color: "#1e2328", weight: 2.5}, interactive: false}).addTo(map);
+      map.fitBounds(grid.getBounds(), {padding: [10, 10]});
+      refresh();
+    }).catch(function () { document.getElementById("map-msg").style.display = "block"; });
+
+    document.getElementById("mode").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) { stopPlay(); setMode(b.dataset.mode); } });
+    document.getElementById("epochs").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) { stopPlay(); setEpoch(+b.dataset.epoch); } });
+    chipBox.addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) setSector(b.dataset.s); });
+    document.getElementById("hot").addEventListener("change", function (e) { S.hot = e.target.checked; refresh(); });
+    document.getElementById("play").addEventListener("click", function () {
+      if (timer) { stopPlay(); return; }
+      setMode("cover");
+      var i = S.epoch === 2020 ? -1 : EP.indexOf(S.epoch);
+      this.textContent = "❚❚";
+      var step = function () { i += 1; if (i >= EP.length) { stopPlay(); return; } setEpoch(EP[i]); };
+      step(); timer = setInterval(step, REDUCED ? 1800 : 1100);
+    });
+    document.querySelectorAll(".strip-bar button").forEach(function (b) {
+      b.addEventListener("click", function () {
+        stopPlay(); setMode("cover"); setEpoch(+b.dataset.epoch);
+        document.getElementById("map-section").scrollIntoView({behavior: REDUCED ? "auto" : "smooth"});
+      });
+    });
+  } else {
+    document.getElementById("map-msg").textContent = "The map library could not load. Check your internet connection and reload the page.";
+    document.getElementById("map-msg").style.display = "block";
+  }
+
+  /* ---------- charts ---------- */
+  if (!window.Chart) return;
+  Chart.defaults.font.family = '"Archivo", system-ui, sans-serif';
+  Chart.defaults.font.size = 13;
+  Chart.defaults.color = "#5f666d";
+  Chart.defaults.borderColor = "#e3e5e2";
+  Chart.defaults.plugins.tooltip.backgroundColor = "#1e2328";
+  Chart.defaults.plugins.tooltip.padding = 10;
+  Chart.defaults.maintainAspectRatio = false;
+  if (REDUCED) Chart.defaults.animation = false;
+  var intervals = ["2000–05", "2005–10", "2010–15", "2015–20"];
+
+  var cTot = new Chart(document.getElementById("c-totals"), {
+    type: "bar",
+    data: {labels: EP.map(String), datasets: [{data: D.total, backgroundColor: ECOL, borderRadius: 3, maxBarThickness: 70}]},
+    options: {
+      plugins: {legend: {display: false}, tooltip: {callbacks: {
+        label: function (c) { return c.parsed.y.toFixed(2) + " km²"; },
+        afterLabel: function (c) { return cTot.$mode === "added" ? D.rate[c.dataIndex] + "% per year" : (c.parsed.y / 438.9 * 100).toFixed(1) + "% of the city"; }
+      }}},
+      scales: {y: {beginAtZero: true, title: {display: true, text: "km²"}}, x: {grid: {display: false}}}
+    }
+  });
+  cTot.$mode = "total";
+  document.getElementById("tot-toggle").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    pressed(this, b); cTot.$mode = b.dataset.v;
+    if (b.dataset.v === "total") {
+      cTot.data.labels = EP.map(String); cTot.data.datasets[0].data = D.total; cTot.data.datasets[0].backgroundColor = ECOL;
+      document.getElementById("tot-title").textContent = "Total built-up surface (km²)";
+    } else {
+      cTot.data.labels = intervals; cTot.data.datasets[0].data = D.added; cTot.data.datasets[0].backgroundColor = ECOL.slice(1);
+      document.getElementById("tot-title").textContent = "Built-up surface added in each 5-year interval (km²)";
+    }
+    cTot.update();
+  });
+
+  new Chart(document.getElementById("c-foot"), {
+    type: "line",
+    data: {labels: EP.map(String), datasets: [
+      {label: "Built-up land (footprint)", data: D.foot, borderColor: "#bd0026", backgroundColor: "#bd0026", tension: .25, pointRadius: 4},
+      {label: "Built-up surface", data: D.total, borderColor: "#fd8d3c", backgroundColor: "#fd8d3c", tension: .25, pointRadius: 4}
+    ]},
+    options: {
+      interaction: {mode: "index", intersect: false},
+      plugins: {legend: {position: "bottom", labels: {boxWidth: 12}}, tooltip: {callbacks: {
+        label: function (c) { return c.dataset.label + ": " + c.parsed.y.toFixed(1) + " km²"; },
+        footer: function (items) { return "Density inside footprint: " + D.dens[items[0].dataIndex] + "%"; }
+      }}},
+      scales: {y: {beginAtZero: true, title: {display: true, text: "km²"}}, x: {grid: {display: false}}}
+    }
+  });
+
+  var ringLabels = D.rings.map(function (r) { return r + " km"; });
+  var cRing = new Chart(document.getElementById("c-rings"), {
+    type: "line",
+    data: {labels: ringLabels, datasets: EP.map(function (y, i) {
+      return {label: String(y), data: D.cover[y], borderColor: ECOL[i], backgroundColor: ECOL[i], tension: .2, pointRadius: 3, borderWidth: y === 2000 || y === 2020 ? 3 : 1.5};
+    })},
+    options: {
+      interaction: {mode: "index", intersect: false},
+      plugins: {legend: {position: "bottom", labels: {boxWidth: 12}}, tooltip: {callbacks: {label: function (c) { return c.dataset.label + ": " + c.parsed.y + "%"; }}}},
+      scales: {y: {beginAtZero: true, title: {display: true, text: "% of land covered by buildings"}}, x: {grid: {display: false}, title: {display: true, text: "Distance from the 2000 core"}}}
+    }
+  });
+  document.getElementById("ring-toggle").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    pressed(this, b);
+    if (b.dataset.v === "cover") {
+      cRing.config.type = "line"; cRing.options.scales.x.offset = false;
+      cRing.data.datasets = EP.map(function (y, i) { return {label: String(y), data: D.cover[y], borderColor: ECOL[i], backgroundColor: ECOL[i], tension: .2, pointRadius: 3, borderWidth: y === 2000 || y === 2020 ? 3 : 1.5}; });
+      cRing.options.scales.y.title.text = "% of land covered by buildings";
+      cRing.options.plugins.legend.display = true;
+      document.getElementById("ring-title").textContent = "Building cover by distance from the core (%)";
+    } else {
+      cRing.config.type = "bar"; cRing.options.scales.x.offset = true;
+      cRing.data.datasets = [{label: "Share of growth", data: D.ringShare, backgroundColor: D.ringShare.map(function (v) { return ramp(v / 30); }), borderRadius: 3}];
+      cRing.options.scales.y.title.text = "% of all 2000–2020 growth";
+      cRing.options.plugins.legend.display = false;
+      document.getElementById("ring-title").textContent = "Share of 2000–2020 growth by distance from the core (%)";
+    }
+    cRing.update();
+  });
+
+  function secData(key) { var src = key === "share" ? D.secShare : D.secInc; return SECT.map(function (s) { return src[s]; }); }
+  function secColors(vals) { var m = Math.max.apply(null, vals); return vals.map(function (v) { return ramp(v / m); }); }
+  var sv = secData("share");
+  var cSec = new Chart(document.getElementById("c-sectors"), {
+    type: "polarArea",
+    data: {labels: SECT, datasets: [{data: sv, backgroundColor: secColors(sv), borderColor: "#fff", borderWidth: 2}]},
+    options: {
+      startAngle: -22.5,
+      plugins: {legend: {display: false}, tooltip: {callbacks: {
+        title: function (it) { return SNAME[it[0].label]; },
+        label: function (c) { return cSec.$key === "share" ? c.parsed.r + "% of all growth" : "+" + c.parsed.r + "% since 2000"; }
+      }}},
+      scales: {r: {startAngle: -22.5, ticks: {display: false}, grid: {color: "#e3e5e2"}, pointLabels: {display: true, centerPointLabels: true, font: {size: 13, weight: "600"}, color: "#1e2328"}}},
+      onClick: function (evt, els) {
+        if (!els.length || !map) return;
+        setSector(SECT[els[0].index]); setMode("growth");
+        document.getElementById("map-section").scrollIntoView({behavior: REDUCED ? "auto" : "smooth"});
+      },
+      onHover: function (evt, els) { evt.native.target.style.cursor = els.length ? "pointer" : "default"; }
+    }
+  });
+  cSec.$key = "share";
+  document.getElementById("sec-toggle").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    pressed(this, b); cSec.$key = b.dataset.v;
+    var v = secData(b.dataset.v);
+    cSec.data.datasets[0].data = v; cSec.data.datasets[0].backgroundColor = secColors(v);
+    cSec.update();
+  });
+})();
+</script>
+</body>
+</html>
