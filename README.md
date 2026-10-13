@@ -5,7 +5,7 @@ Test 2, Question 2 for Urban Informatics and Spatial Analytics, IIT Tirupati. Ri
 This repo has a Google Earth Engine (GHSL) analysis of how Surat's built-up surface changed between 2000 and 2020, and where it grew.
 
 - **Webpage:** `index.html`, served with GitHub Pages (interactive map, charts, swipe and GIF)
-- **Notebook:** `Surat_GHSL_BuiltUp_Q2.ipynb`
+- **Notebook:** `HS25M110_Q2_T2.ipynb`
 - **Boundary:** `surat_ulb.geojson`, the Surat ULB polygon from the SBM layer via ramSeraph/indian_admin_boundaries (CC0)
 - **Outputs:** the `outputs/` folder has the figures, GIF, epoch frames, interactive time-slider map, 1 km grid and CSV tables
 
