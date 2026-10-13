@@ -157,13 +157,13 @@ footer{margin-top:5rem;padding:2rem 0 3rem;border-top:1px solid var(--rule);font
 <nav class="nav" aria-label="Sections">
   <div class="wrap">
     <b>Surat, 2000–2020</b>
-    <a href="#question">Question</a>
+    <a href="#question">Question and Method</a>
     <a href="#map-section">Map</a>
     <a href="#how-much">How much</a>
     <a href="#outward">Outward or denser</a>
     <a href="#where">Where</a>
     <a href="#discussion">Discussion</a>
-    <a href="#method">Method and data</a>
+    <a href="#source">Sources</a>
   </div>
 </nav>
 
@@ -204,7 +204,7 @@ footer{margin-top:5rem;padding:2rem 0 3rem;border-top:1px solid var(--rule);font
 
 <!-- QUESTION AND METHOD -->
 <section id="question" class="prose">
-  <h2>Question and method</h2>
+  <h2>Question and Method</h2>
   <p><b>Question.</b> How did the total built-up surface of Surat change between 2000 and 2020, and where are the major growth zones?</p>
   <p><b>Data and boundary.</b> I used GHSL Built-up Surface (<code>JRC/GHSL/P2023A/GHS_BUILT_S</code>), a 100 m grid giving the m² of built-up area in each cell, for the 2000, 2005, 2010, 2015 and 2020 epochs. It was clipped to the Surat Urban Local Body boundary from the Swachh Bharat Mission layer (sources are listed <a href="#method">below</a>).</p>
   <p><b>Method.</b> In Google Earth Engine (Python/geemap) I summed built-up surface inside the boundary for each epoch to get the area and percentage change. To see the footprint, I counted a 100 m cell as built-up land if at least 10% of it is built. To find the growth zones, I summed growth on a 1 km grid and grouped it by distance from the 2000 core and by compass direction. GHSL epochs are multi-year composites, so no seasonal window or cloud filter applies. Every epoch is mapped on the same colour scale.</p>
@@ -443,10 +443,8 @@ footer{margin-top:5rem;padding:2rem 0 3rem;border-top:1px solid var(--rule);font
 </section>
 
 <!-- METHOD -->
-<section id="method" class="prose">
-  <h2>Method and data</h2>
-  <p>Everything was done in Python with the Earth Engine API and <a href="https://geemap.org">geemap</a>. Totals are sums of <code>built_surface</code> inside the boundary at GHSL's native 100 m grid. The footprint uses cells with at least 1,000 m² built. Growth zones use a 1 km fishnet clipped to the boundary, with rings and sectors measured from the 2000 built-up-weighted centre.</p>
-  <h3>Sources</h3>
+<section id="source" class="prose">
+  <h2>Sources</h2>
   <ul class="links">
     <li>Built-up data: <a href="https://developers.google.com/earth-engine/datasets/catalog/JRC_GHSL_P2023A_GHS_BUILT_S">GHSL Built-up Surface P2023A</a> in the Earth Engine catalog (<code>JRC/GHSL/P2023A/GHS_BUILT_S</code>), from the European Commission's <a href="https://human-settlement.emergency.copernicus.eu/">Global Human Settlement Layer</a> project</li>
     <li>Boundary: Surat ULB polygon (ULB code 802629) from the Swachh Bharat Mission layer, released via <a href="https://github.com/ramSeraph/indian_admin_boundaries/releases/tag/urban">ramSeraph/indian_admin_boundaries</a> (CC0, attribution to <a href="https://datameet.org">datameet</a> and the original government source)</li>
@@ -519,7 +517,7 @@ footer{margin-top:5rem;padding:2rem 0 3rem;border-top:1px solid var(--rule);font
 
   /* ---------- nav highlight ---------- */
   var navLinks = document.querySelectorAll(".nav a");
-  var secIds = ["question", "map-section", "how-much", "outward", "where", "discussion", "method"];
+  var secIds = ["question", "map-section", "how-much", "outward", "where", "discussion", "source"];
   function navOn() {
     var cur = null;
     secIds.forEach(function (id) { if (document.getElementById(id).getBoundingClientRect().top < window.innerHeight * 0.35) cur = id; });
