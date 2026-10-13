@@ -246,7 +246,6 @@ footer{margin-top:5rem;padding:2rem 0 3rem;border-top:1px solid var(--rule);font
         <div class="chips" id="sectors"></div>
       </div>
       <div>
-        <label class="check"><input type="checkbox" id="hot" checked> Outline top 10% growth cells</label>
         <label class="check" style="margin-top:.4rem"><input type="checkbox" id="sat"> Satellite basemap</label>
       </div>
       <div class="legend">
@@ -367,7 +366,7 @@ footer{margin-top:5rem;padding:2rem 0 3rem;border-top:1px solid var(--rule);font
     </figure>
     <figure>
       <img src="outputs/fig_hotspots.png" alt="1 km grid map of growth with the top 10% of cells outlined." loading="lazy">
-      <figcaption>Growth per 1 km cell. The outlined cells are the top 10%, and they hold 45% of all growth. You can explore these on the <a href="#map-section">map</a>.</figcaption>
+      <figcaption>   Growth per 1 km cell. The darkest cells are the main growth zones: the top 10% of cells hold 45% of all growth. You can explore these on the <a href="#map-section">map</a>.</figcaption>
     </figure>
   </div>
 
@@ -526,7 +525,7 @@ footer{margin-top:5rem;padding:2rem 0 3rem;border-top:1px solid var(--rule);font
   window.addEventListener("scroll", navOn, {passive: true}); navOn();
 
   /* ---------- map ---------- */
-  var S = {mode: "cover", epoch: 2020, sector: null, hot: true};
+  var S = {mode: "cover", epoch: 2020, sector: null, hot: false};
   var map, grid, hotLayer, coverMax = 60, growthMax = 35, hotCut = Infinity, timer = null;
   var chipBox = document.getElementById("sectors");
   ["All"].concat(SECT).forEach(function (s) {
@@ -631,7 +630,6 @@ footer{margin-top:5rem;padding:2rem 0 3rem;border-top:1px solid var(--rule);font
     document.getElementById("mode").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) { stopPlay(); setMode(b.dataset.mode); } });
     document.getElementById("epochs").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) { stopPlay(); setEpoch(+b.dataset.epoch); } });
     chipBox.addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) setSector(b.dataset.s); });
-    document.getElementById("hot").addEventListener("change", function (e) { S.hot = e.target.checked; refresh(); });
     document.getElementById("play").addEventListener("click", function () {
       if (timer) { stopPlay(); return; }
       setMode("cover");
