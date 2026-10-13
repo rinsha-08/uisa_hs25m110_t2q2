@@ -157,6 +157,7 @@ footer{margin-top:5rem;padding:2rem 0 3rem;border-top:1px solid var(--rule);font
 <nav class="nav" aria-label="Sections">
   <div class="wrap">
     <b>Surat, 2000–2020</b>
+    <a href="#question">Question</a>
     <a href="#map-section">Map</a>
     <a href="#how-much">How much</a>
     <a href="#outward">Outward or denser</a>
@@ -200,6 +201,14 @@ footer{margin-top:5rem;padding:2rem 0 3rem;border-top:1px solid var(--rule);font
 </header>
 
 <main class="wrap">
+
+<!-- QUESTION AND METHOD -->
+<section id="question" class="prose">
+  <h2>Question and method</h2>
+  <p><b>Question.</b> How did the total built-up surface of Surat change between 2000 and 2020, and where are the major growth zones?</p>
+  <p><b>Data and boundary.</b> I used GHSL Built-up Surface (<code>JRC/GHSL/P2023A/GHS_BUILT_S</code>), a 100 m grid giving the m² of built-up area in each cell, for the 2000, 2005, 2010, 2015 and 2020 epochs. It was clipped to the Surat Urban Local Body boundary from the Swachh Bharat Mission layer (sources are listed <a href="#method">below</a>).</p>
+  <p><b>Method.</b> In Google Earth Engine (Python/geemap) I summed built-up surface inside the boundary for each epoch to get the area and percentage change. To see the footprint, I counted a 100 m cell as built-up land if at least 10% of it is built. To find the growth zones, I summed growth on a 1 km grid and grouped it by distance from the 2000 core and by compass direction. GHSL epochs are multi-year composites, so no seasonal window or cloud filter applies. Every epoch is mapped on the same colour scale.</p>
+</section>
 
 <!-- MAP EXPLORER -->
 <section id="map-section">
@@ -306,6 +315,11 @@ footer{margin-top:5rem;padding:2rem 0 3rem;border-top:1px solid var(--rule);font
       <h3 style="margin-top:.5rem">Animated, 2000 to 2020</h3>
       <img class="gif" src="outputs/surat_builtup.gif" alt="Animation of Surat's built-up surface across the five epochs" loading="lazy">
     </div>
+  </div>
+  <div class="legend" style="max-width:26rem;margin-top:1rem;font-family:var(--sans);font-size:.88rem">
+    <div class="ramp"></div>
+    <div class="ends"><span>0</span><span>8,000 m²</span></div>
+    <div class="small" style="margin-top:.2rem">Built-up surface per 100 m cell (m²), on the same scale for every year. The black line is the Surat ULB boundary.</div>
   </div>
 </section>
 
@@ -505,7 +519,7 @@ footer{margin-top:5rem;padding:2rem 0 3rem;border-top:1px solid var(--rule);font
 
   /* ---------- nav highlight ---------- */
   var navLinks = document.querySelectorAll(".nav a");
-  var secIds = ["map-section", "how-much", "outward", "where", "discussion", "method"];
+  var secIds = ["question", "map-section", "how-much", "outward", "where", "discussion", "method"];
   function navOn() {
     var cur = null;
     secIds.forEach(function (id) { if (document.getElementById(id).getBoundingClientRect().top < window.innerHeight * 0.35) cur = id; });
